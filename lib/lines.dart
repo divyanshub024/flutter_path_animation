@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
 class Lines extends StatefulWidget {
@@ -15,6 +17,7 @@ class _LinesState extends State<Lines> with SingleTickerProviderStateMixin {
       vsync: this,
       duration: Duration(seconds: 2),
     );
+    _controller.value = 1.0;
   }
 
   @override
@@ -23,37 +26,62 @@ class _LinesState extends State<Lines> with SingleTickerProviderStateMixin {
       appBar: AppBar(
         title: Text('Lines'),
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.max,
-        children: <Widget>[
-          AnimatedBuilder(
-            animation: _controller,
-            builder: (context, child) {
-              print(_controller.value);
-              return Expanded(
-                child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 32.0, right: 32.0),
-                    child: CustomPaint(
-                      painter: LinePainter(progress: _controller.value),
-                      size: Size(double.maxFinite, 100),
-                    ),
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.max,
+          children: <Widget>[
+            AnimatedBuilder(
+              animation: _controller,
+              builder: (context, child) {
+                return Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: <Widget>[
+                      Padding(
+                        padding: const EdgeInsets.only(left: 32.0, right: 32.0),
+                        child: CustomPaint(
+                          painter: LinePainter(progress: _controller.value),
+                          size: Size(double.maxFinite, 100),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 32.0, right: 32.0),
+                        child: CustomPaint(
+                          painter: DashLinePainter(progress: _controller.value),
+                          size: Size(double.maxFinite, 100),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              );
-            },
-          ),
-          Center(
-            child: RaisedButton(
-              child: Text('Animated'),
-              onPressed: () {
-                _controller.reset();
-                _controller.forward();
+                );
               },
             ),
-          )
-        ],
+            Padding(
+              padding: const EdgeInsets.only(left: 24.0),
+              child: Text('Progress'),
+            ),
+            Slider(
+              value: _controller.value,
+              min: 0.0,
+              max: 1.0,
+              onChanged: (value) {
+                setState(() {
+                  _controller.value = value;
+                });
+              },
+            ),
+            Center(
+              child: RaisedButton(
+                child: Text('Animated'),
+                onPressed: () {
+                  _controller.reset();
+                  _controller.forward();
+                },
+              ),
+            )
+          ],
+        ),
       ),
     );
   }
@@ -74,7 +102,6 @@ class LinePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     var path = Path();
     path.moveTo(0, size.height / 2);
-    print('${size.width * progress}, ${size.height / 2}');
     path.lineTo(size.width * progress, size.height / 2);
     canvas.drawPath(path, _paint);
   }
@@ -85,35 +112,43 @@ class LinePainter extends CustomPainter {
   }
 }
 
-//class LinePainter extends CustomPainter {
-//  Paint _paint = Paint()
-//    ..color = Colors.black
-//    ..strokeWidth = 4.0
-//    ..style = PaintingStyle.stroke
-//    ..strokeJoin = StrokeJoin.round;
-//
-//  @override
-//  void paint(Canvas canvas, Size size) {
-//    Path path = createLinePath(size);
-//    canvas.drawPath(path, _paint);
-//  }
-//
-//  Path createLinePath(Size size) {
-//    var path = Path();
-//    var x = 0.0;
-//    var y = size.height;
-//    path.moveTo(x, y);
-//    for (int i = 0; i < 3; i++) {
-//      x += size.height / 2;
-//      path.lineTo(x, 0.0);
-//      x += size.height / 2;
-//      path.lineTo(x, size.height);
-//    }
-//    return path;
-//  }
-//
-//  @override
-//  bool shouldRepaint(CustomPainter oldDelegate) {
-//    return false;
-//  }
-//}
+class DashLinePainter extends CustomPainter {
+  final double progress;
+
+  DashLinePainter({this.progress});
+
+  Paint _paint = Paint()
+    ..color = Colors.black
+    ..strokeWidth = 4.0
+    ..style = PaintingStyle.stroke
+    ..strokeJoin = StrokeJoin.round;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    var path = Path()
+      ..moveTo(0, size.height / 2)
+      ..lineTo(size.width * progress, size.height / 2);
+
+    Path dashPath = Path();
+    double dashWidth = 10.0;
+    double dashSpace = 5.0;
+    double distance = 0.0;
+
+    for (PathMetric pathMetric in path.computeMetrics()) {
+      while (distance < pathMetric.length) {
+        dashPath.addPath(
+          pathMetric.extractPath(distance, distance + dashWidth),
+          Offset.zero,
+        );
+        distance += dashWidth;
+        distance += dashSpace;
+      }
+    }
+    canvas.drawPath(dashPath, _paint);
+  }
+
+  @override
+  bool shouldRepaint(DashLinePainter oldDelegate) {
+    return oldDelegate.progress != progress;
+  }
+}

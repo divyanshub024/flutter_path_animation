@@ -9,7 +9,6 @@ class Spiral extends StatefulWidget {
 }
 
 class _SpiralState extends State<Spiral> with SingleTickerProviderStateMixin {
-  double progress = 1.0;
   bool showDots = false, showPath = true;
   AnimationController _controller;
 
@@ -20,6 +19,7 @@ class _SpiralState extends State<Spiral> with SingleTickerProviderStateMixin {
       vsync: this,
       duration: Duration(seconds: 5),
     );
+    _controller.value = 1.0;
   }
 
   @override
@@ -28,77 +28,81 @@ class _SpiralState extends State<Spiral> with SingleTickerProviderStateMixin {
       appBar: AppBar(
         title: Text('Spiral'),
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.max,
-        children: <Widget>[
-          AnimatedBuilder(
-            animation: _controller,
-            builder: (context, child) {
-              print('${_controller.value}');
-              return Expanded(
-                child: Center(
-                  child: CustomPaint(
-                    painter: SpiralPainter(
-                      progress: _controller.value,
-                      showPath: showPath,
-                      showDots: showDots,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.max,
+          children: <Widget>[
+            AnimatedBuilder(
+              animation: _controller,
+              builder: (context, child) {
+                print('${_controller.value}');
+                return Expanded(
+                  child: Center(
+                    child: CustomPaint(
+                      painter: SpiralPainter(
+                        progress: _controller.value,
+                        showPath: showPath,
+                        showDots: showDots,
+                      ),
                     ),
                   ),
+                );
+              },
+            ),
+            Row(
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.only(left: 24.0, right: 0.0),
+                  child: Text('Show Dots'),
                 ),
-              );
-            },
-          ),
-          Row(
-            children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.only(left: 24.0, right: 0.0),
-                child: Text('Show Dots'),
-              ),
-              Switch(
-                value: showDots,
-                onChanged: (value) {
-                  setState(() {
-                    showDots = value;
-                  });
+                Switch(
+                  value: showDots,
+                  onChanged: (value) {
+                    setState(() {
+                      showDots = value;
+                    });
+                  },
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(left: 24.0, right: 0.0),
+                  child: Text('Show Path'),
+                ),
+                Switch(
+                  value: showPath,
+                  onChanged: (value) {
+                    setState(() {
+                      showPath = value;
+                    });
+                  },
+                ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.only(left: 24.0),
+              child: Text('Progress'),
+            ),
+            Slider(
+              value: _controller.value,
+              min: 0.0,
+              max: 1.0,
+              onChanged: (value) {
+                setState(() {
+                  _controller.value = value;
+                });
+              },
+            ),
+            Center(
+              child: RaisedButton(
+                onPressed: () {
+                  _controller.reset();
+                  _controller.forward();
                 },
+                child: Text('Animate'),
               ),
-              Padding(
-                padding: const EdgeInsets.only(left: 24.0, right: 0.0),
-                child: Text('Show Path'),
-              ),
-              Switch(
-                value: showPath,
-                onChanged: (value) {
-                  setState(() {
-                    showPath = value;
-                  });
-                },
-              ),
-            ],
-          ),
-          Padding(
-            padding: const EdgeInsets.only(left: 24.0),
-            child: Text('Progress'),
-          ),
-//          Slider(
-//            value: progress,
-//            min: 0.0,
-//            max: 1.0,
-//            onChanged: (value) {
-//              setState(() {
-//                progress = value;
-//              });
-//            },
-//          ),
-          RaisedButton(
-            onPressed: () {
-              _controller.reset();
-              _controller.forward();
-            },
-            child: Text('Animate'),
-          )
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }

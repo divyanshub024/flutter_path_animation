@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:path_animation/circles.dart';
 import 'package:path_animation/lines.dart';
-import 'package:path_animation/path_morph.dart';
+import 'package:path_animation/planets.dart';
 import 'package:path_animation/polygon.dart';
 import 'package:path_animation/spiral.dart';
 
@@ -28,7 +28,7 @@ class MyHomePage extends StatelessWidget {
       'Circles': Circles(),
       'Polygon': Polygon(),
       'Spiral': Spiral(),
-      'PathMorph': PathMorph(),
+      'Planets': Planets(),
     };
 
     List<Widget> children = [];

@@ -9,10 +9,9 @@ class Circles extends StatefulWidget {
 }
 
 class _CirclesState extends State<Circles> with SingleTickerProviderStateMixin {
-  double circles = 5.0;
-  double progress = 1.0;
-  bool showDots = false, showPath = true;
   AnimationController _controller;
+  double circles = 5.0;
+  bool showDots = false, showPath = true;
 
   @override
   void initState() {
@@ -21,11 +20,7 @@ class _CirclesState extends State<Circles> with SingleTickerProviderStateMixin {
       vsync: this,
       duration: Duration(seconds: 3),
     );
-    _controller.addListener(() {
-      setState(() {
-        progress = _controller.value;
-      });
-    });
+    _controller.value = 1.0;
   }
 
   @override
@@ -34,95 +29,96 @@ class _CirclesState extends State<Circles> with SingleTickerProviderStateMixin {
       appBar: AppBar(
         title: Text('Circles'),
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.max,
-        children: <Widget>[
-          AnimatedBuilder(
-            animation: _controller,
-            builder: (context, child) {
-              return Expanded(
-                child: Center(
-                  child: CustomPaint(
-                    painter: CirclesPainter(
-                      circles: circles,
-                      progress: progress,
-                      showDots: showDots,
-                      showPath: showPath,
-                    ),
-                  ),
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.max,
+          children: <Widget>[
+            Expanded(
+              child: AnimatedBuilder(
+                  animation: _controller,
+                  builder: (context, snapshot) {
+                    return Center(
+                      child: CustomPaint(
+                        painter: CirclesPainter(
+                          circles: circles,
+                          progress: _controller.value,
+                          showDots: showDots,
+                          showPath: showPath,
+                        ),
+                      ),
+                    );
+                  }),
+            ),
+            Row(
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.only(left: 24.0, right: 0.0),
+                  child: Text('Show Dots'),
                 ),
-              );
-            },
-          ),
-          Row(
-            children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.only(left: 24.0, right: 0.0),
-                child: Text('Show Dots'),
-              ),
-              Switch(
-                value: showDots,
-                onChanged: (value) {
-                  setState(() {
-                    showDots = value;
-                  });
-                },
-              ),
-              Padding(
-                padding: const EdgeInsets.only(left: 24.0, right: 0.0),
-                child: Text('Show Path'),
-              ),
-              Switch(
-                value: showPath,
-                onChanged: (value) {
-                  setState(() {
-                    showPath = value;
-                  });
-                },
-              ),
-            ],
-          ),
-          Padding(
-            padding: const EdgeInsets.only(left: 24.0),
-            child: Text('Circles'),
-          ),
-          Slider(
-            value: circles,
-            min: 1.0,
-            max: 10.0,
-            divisions: 9,
-            label: circles.toInt().toString(),
-            onChanged: (value) {
-              setState(() {
-                circles = value;
-              });
-            },
-          ),
-          Padding(
-            padding: const EdgeInsets.only(left: 24.0),
-            child: Text('Progress'),
-          ),
-          Slider(
-            value: progress,
-            min: 0.0,
-            max: 1.0,
-            onChanged: (value) {
-              setState(() {
-                progress = value;
-              });
-            },
-          ),
-          Center(
-            child: RaisedButton(
-              child: Text('Animate'),
-              onPressed: () {
-                _controller.reset();
-                _controller.forward();
+                Switch(
+                  value: showDots,
+                  onChanged: (value) {
+                    setState(() {
+                      showDots = value;
+                    });
+                  },
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(left: 24.0, right: 0.0),
+                  child: Text('Show Path'),
+                ),
+                Switch(
+                  value: showPath,
+                  onChanged: (value) {
+                    setState(() {
+                      showPath = value;
+                    });
+                  },
+                ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.only(left: 24.0),
+              child: Text('Circles'),
+            ),
+            Slider(
+              value: circles,
+              min: 1.0,
+              max: 10.0,
+              divisions: 9,
+              label: circles.toInt().toString(),
+              onChanged: (value) {
+                setState(() {
+                  circles = value;
+                });
               },
             ),
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.only(left: 24.0),
+              child: Text('Progress'),
+            ),
+            Slider(
+              value: _controller.value,
+              min: 0.0,
+              max: 1.0,
+              onChanged: (value) {
+                setState(() {
+                  _controller.value = value;
+                });
+              },
+            ),
+            Center(
+              child: RaisedButton(
+                child: Text('Animate'),
+                onPressed: () {
+                  _controller.reset();
+                  _controller.forward();
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -146,8 +142,10 @@ class CirclesPainter extends CustomPainter {
     var path = createPath();
     PathMetrics pathMetrics = path.computeMetrics();
     for (PathMetric pathMetric in pathMetrics) {
-      Path extractPath =
-          pathMetric.extractPath(0.0, pathMetric.length * progress);
+      Path extractPath = pathMetric.extractPath(
+        0.0,
+        pathMetric.length * progress,
+      );
       if (showPath) {
         canvas.drawPath(extractPath, myPaint);
       }
@@ -165,11 +163,11 @@ class CirclesPainter extends CustomPainter {
     var path = Path();
     int n = circles.toInt();
     var range = List<int>.generate(n, (i) => i + 1);
+    double angle = 2 * math.pi / n;
     for (int i in range) {
-      double x = 2 * math.pi / n;
-      double dx = radius * math.cos(i * x);
-      double dy = radius * math.sin(i * x);
-      path.addOval(Rect.fromCircle(center: Offset(dx, dy), radius: radius));
+      double x = radius * math.cos(i * angle);
+      double y = radius * math.sin(i * angle);
+      path.addOval(Rect.fromCircle(center: Offset(x, y), radius: radius));
     }
     return path;
   }

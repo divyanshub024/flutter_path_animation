@@ -8,10 +8,20 @@ class Polygon extends StatefulWidget {
   _PolygonState createState() => _PolygonState();
 }
 
-class _PolygonState extends State<Polygon> {
+class _PolygonState extends State<Polygon> with SingleTickerProviderStateMixin {
   double sides = 3.0;
-  double progress = 1.0;
   bool showDots = false, showPath = true;
+  AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: 3),
+    );
+    _controller.value = 1.0;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,81 +29,96 @@ class _PolygonState extends State<Polygon> {
       appBar: AppBar(
         title: Text('Polygon'),
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.max,
-        children: <Widget>[
-          Expanded(
-            child: Center(
-              child: CustomPaint(
-                painter: PolygonPainter(
-                  sides: sides,
-                  progress: progress,
-                  showDots: showDots,
-                  showPath: showPath,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.max,
+          children: <Widget>[
+            Expanded(
+              child: AnimatedBuilder(
+                  animation: _controller,
+                  builder: (context, snapshot) {
+                    return Center(
+                      child: CustomPaint(
+                        painter: PolygonPainter(
+                          sides: sides,
+                          progress: _controller.value,
+                          showDots: showDots,
+                          showPath: showPath,
+                        ),
+                      ),
+                    );
+                  }),
+            ),
+            Row(
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.only(left: 24.0, right: 0.0),
+                  child: Text('Show Dots'),
                 ),
+                Switch(
+                  value: showDots,
+                  onChanged: (value) {
+                    setState(() {
+                      showDots = value;
+                    });
+                  },
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(left: 24.0, right: 0.0),
+                  child: Text('Show Path'),
+                ),
+                Switch(
+                  value: showPath,
+                  onChanged: (value) {
+                    setState(() {
+                      showPath = value;
+                    });
+                  },
+                ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.only(left: 24.0),
+              child: Text('Sides'),
+            ),
+            Slider(
+              value: sides,
+              min: 3.0,
+              max: 10.0,
+              label: sides.toInt().toString(),
+              divisions: 7,
+              onChanged: (value) {
+                setState(() {
+                  sides = value;
+                });
+              },
+            ),
+            Padding(
+              padding: const EdgeInsets.only(left: 24.0),
+              child: Text('Progress'),
+            ),
+            Slider(
+              value: _controller.value,
+              min: 0.0,
+              max: 1.0,
+              onChanged: (value) {
+                setState(() {
+                  _controller.value = value;
+                });
+              },
+            ),
+            Center(
+              child: RaisedButton(
+                child: Text('Animate'),
+                onPressed: () {
+                  _controller.reset();
+                  _controller.forward();
+                },
               ),
             ),
-          ),
-          Row(
-            children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.only(left: 24.0, right: 0.0),
-                child: Text('Show Dots'),
-              ),
-              Switch(
-                value: showDots,
-                onChanged: (value) {
-                  setState(() {
-                    showDots = value;
-                  });
-                },
-              ),
-              Padding(
-                padding: const EdgeInsets.only(left: 24.0, right: 0.0),
-                child: Text('Show Path'),
-              ),
-              Switch(
-                value: showPath,
-                onChanged: (value) {
-                  setState(() {
-                    showPath = value;
-                  });
-                },
-              ),
-            ],
-          ),
-          Padding(
-            padding: const EdgeInsets.only(left: 24.0),
-            child: Text('Sides'),
-          ),
-          Slider(
-            value: sides,
-            min: 3.0,
-            max: 10.0,
-            label: sides.toInt().toString(),
-            divisions: 7,
-            onChanged: (value) {
-              setState(() {
-                sides = value;
-              });
-            },
-          ),
-          Padding(
-            padding: const EdgeInsets.only(left: 24.0),
-            child: Text('Progress'),
-          ),
-          Slider(
-            value: progress,
-            min: 0.0,
-            max: 1.0,
-            onChanged: (value) {
-              setState(() {
-                progress = value;
-              });
-            },
-          )
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -119,7 +144,7 @@ class PolygonPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    var path = createPath(sides.toInt(), 100, size.width / 2, size.height / 2);
+    var path = createPath(sides.toInt(), 100);
     PathMetric pathMetric = path.computeMetrics().first;
     Path extractPath =
         pathMetric.extractPath(0.0, pathMetric.length * progress);
@@ -137,16 +162,17 @@ class PolygonPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(CustomPainter oldDelegate) {
-    return false;
+    return true;
   }
 
-  Path createPath(int sides, double radius, double cx, double cy) {
+  Path createPath(int sides, double radius) {
     var path = Path();
     var angle = (math.pi * 2) / sides;
-    path.moveTo(cx + (radius * math.cos(0.0)), cy + (radius * math.sin(0.0)));
+    path.moveTo(radius * math.cos(0.0), radius * math.sin(0.0));
     for (int i = 1; i <= sides; i++) {
-      path.lineTo(cx + (radius * math.cos(angle * i)),
-          cy + (radius * math.sin(angle * i)));
+      double x = radius * math.cos(angle * i);
+      double y = radius * math.sin(angle * i);
+      path.lineTo(x, y);
     }
     path.close();
     return path;
