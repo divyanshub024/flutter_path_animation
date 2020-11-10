@@ -122,6 +122,12 @@ class _PolygonState extends State<Polygon> with SingleTickerProviderStateMixin {
       ),
     );
   }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 }
 
 class PolygonPainter extends CustomPainter {

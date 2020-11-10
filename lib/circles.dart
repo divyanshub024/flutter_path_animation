@@ -122,6 +122,12 @@ class _CirclesState extends State<Circles> with SingleTickerProviderStateMixin {
       ),
     );
   }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 }
 
 class CirclesPainter extends CustomPainter {
