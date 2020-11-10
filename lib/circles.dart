@@ -122,6 +122,12 @@ class _CirclesState extends State<Circles> with SingleTickerProviderStateMixin {
       ),
     );
   }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 }
 
 class CirclesPainter extends CustomPainter {
@@ -142,9 +148,13 @@ class CirclesPainter extends CustomPainter {
     var path = createPath();
     PathMetrics pathMetrics = path.computeMetrics();
     for (PathMetric pathMetric in pathMetrics) {
+      var calculation = pathMetric.length * progress;
+      if (calculation.toInt() == 0 || calculation.toInt() < 0) {
+        return;
+      }
       Path extractPath = pathMetric.extractPath(
         0.0,
-        pathMetric.length * progress,
+        calculation,
       );
       if (showPath) {
         canvas.drawPath(extractPath, myPaint);

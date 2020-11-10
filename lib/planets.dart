@@ -64,6 +64,14 @@ class _PlanetsState extends State<Planets> with TickerProviderStateMixin {
       ),
     );
   }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _controller1.dispose();
+    _controller2.dispose();
+    super.dispose();
+  }
 }
 
 class AtomPaint extends CustomPainter {
@@ -96,6 +104,10 @@ class AtomPaint extends CustomPainter {
     canvas.drawPath(firstAxis, _axisPaint);
     UI.PathMetrics pathMetrics = firstAxis.computeMetrics();
     for (UI.PathMetric pathMetric in pathMetrics) {
+      var calculation = pathMetric.length * value;
+      if (calculation.toInt() == 0 || calculation.toInt() < 0) {
+        return;
+      }
       Path extractPath = pathMetric.extractPath(
         0.0,
         pathMetric.length * value,

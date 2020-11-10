@@ -85,6 +85,12 @@ class _LinesState extends State<Lines> with SingleTickerProviderStateMixin {
       ),
     );
   }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 }
 
 class LinePainter extends CustomPainter {
